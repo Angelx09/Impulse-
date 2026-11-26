@@ -226,7 +226,7 @@
       position: relative;
       isolation: isolate;
 
-      width: min(39vw, 64svh, 600px);
+      width: min(30vw, 49svh, 460px);
       aspect-ratio: 1;
     }
 
@@ -476,7 +476,7 @@
       }
 
       .artist-button {
-        font-size: 34px;
+        font-size: clamp(22px, 2.8vw, 42px);
       }
 
       .artist-button[aria-pressed="true"]::before {
@@ -491,6 +491,65 @@
         font-size: 11px;
       }
     }
+.impulse-logo {
+  display: block;
+  width: clamp(100px, 14vw, 180px);
+  max-width: 80%;
+  height: auto;
+}
+#artist-wheel {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: clamp(320px, 38vw, 520px);
+  max-height: none;
+  overflow: visible;
+  padding: 0;
+}
+
+#artist-wheel button {
+  position: absolute;
+  left: var(--wheel-x, 50%);
+  top: var(--wheel-y, 50%);
+  transform: translate(-50%, -50%);
+  width: max-content;
+  max-width: 26%;
+  margin: 0;
+  padding: 6px;
+  border: 0;
+  background: transparent;
+  color: #fffde4;
+  font-size: clamp(12px, 1.2vw, 18px);
+  line-height: 1.1;
+  text-align: center;
+  white-space: normal;
+  opacity: 0.42;
+  cursor: pointer;
+  transition: left 350ms ease, top 350ms ease, opacity 200ms ease,
+    font-size 250ms ease;
+}
+
+#artist-wheel button:hover,
+#artist-wheel button:focus-visible {
+  opacity: 1;
+}
+
+#artist-wheel button.wheel-selected {
+  z-index: 1;
+  max-width: 68%;
+  font-size: clamp(28px, 4vw, 64px);
+  opacity: 1;
+}
+
+#artist-wheel button::before {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #artist-wheel button {
+    transition: none;
+  }
+}
 
     @media (prefers-reduced-motion: reduce) {
       * {
@@ -503,6 +562,71 @@
         opacity: 0.3;
       }
     }
+
+#artist-portrait {
+  width: min(34vw, 500px);
+  max-width: 85%;
+  height: auto;
+  aspect-ratio: 1;
+  margin-inline: auto;
+}
+
+@media (max-width: 700px) {
+  #artist-portrait {
+    width: min(76vw, 400px);
+  }
+}
+.artist-wheel {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: none;
+  min-height: 300px;
+  aspect-ratio: 1;
+  overflow: visible;
+  mask-image: none;
+  -webkit-mask-image: none;
+}
+
+.artist-wheel button.artist-wheel-name {
+  position: absolute;
+  left: var(--artist-x);
+  top: var(--artist-y);
+  transform: translate(-50%, -50%);
+  width: max-content;
+  max-width: 24%;
+  padding: 5px;
+  text-align: center;
+  white-space: normal;
+  line-height: 1.1;
+  font-size: clamp(12px, 1.2vw, 18px);
+  opacity: 0.55;
+  transition: left 320ms ease, top 320ms ease, opacity 180ms ease;
+}
+
+.artist-wheel button.artist-wheel-name::before {
+  display: none;
+}
+
+.artist-wheel button.artist-wheel-name:hover,
+.artist-wheel button.artist-wheel-name:focus-visible {
+  opacity: 1;
+}
+
+.artist-wheel button.artist-wheel-name.is-centered {
+  z-index: 1;
+  max-width: 58%;
+  font-size: clamp(26px, 3.6vw, 60px);
+  color: #fffde4;
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .artist-wheel button.artist-wheel-name {
+    transition: none;
+  }
+}
   </style>
 </head>
 
@@ -524,9 +648,7 @@
   </div>
 
   <header class="header">
-    <a class="logo" href="#" aria-label="Impulse home">
-      impulse<span>!</span>
-    </a>
+      <img class="impulse-logo" src="./images/impulse-logo.svg" alt="Impulse!">
 
     <nav class="navigation" aria-label="Main navigation">
       <a
@@ -984,6 +1106,38 @@
     window.addEventListener("resize", drawTexture);
 
     playIntro();
+    const artistWheel = document.querySelector("#artist-wheel");
+const wheelButtons = [...artistWheel.querySelectorAll("button")];
+
+const wheel = document.querySelector(".artist-wheel");
+const names = Array.from(wheel.querySelectorAll("button"));
+
+function arrangeArtistNames(selected) {
+  const outerNames = names.filter(button => button !== selected);
+
+  selected.classList.add("is-centered");
+  selected.style.setProperty("--artist-x", "50%");
+  selected.style.setProperty("--artist-y", "50%");
+
+  outerNames.forEach((button, index) => {
+    const angle = (index / outerNames.length) * 2 * Math.PI - Math.PI / 2;
+
+    button.classList.remove("is-centered");
+    button.style.setProperty("--artist-x", `${50 + 37 * Math.cos(angle)}%`);
+    button.style.setProperty("--artist-y", `${50 + 37 * Math.sin(angle)}%`);
+  });
+}
+
+names.forEach(button => {
+  button.classList.add("artist-wheel-name");
+  button.addEventListener("click", () => arrangeArtistNames(button));
+});
+
+const initialArtist =
+  wheel.querySelector('button[aria-pressed="true"], button.active, button.is-active') ??
+  names[0];
+
+if (initialArtist) arrangeArtistNames(initialArtist);
   </script>
 </body>
 </html>
