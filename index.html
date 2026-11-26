@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>impulse! — Artists</title>
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@800;900&family=DM+Sans:wght@400;500&display=swap"
+    rel="stylesheet"
+  >
+
+  <style>
+    :root {
+      --background: #242424;
+      --text: #f4f3ec;
+      --muted: #a6a6a2;
+      --orange: #ff6b00;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+    }
+
+    body {
+      background: var(--background);
+      color: var(--text);
+      font-family: "DM Sans", Arial, sans-serif;
+      isolation: isolate;
+    }
+
+    button,
+    a {
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    button {
+      font: inherit;
+      color: inherit;
+      cursor: pointer;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    button:focus-visible,
+    a:focus-visible {
+      outline: 2px solid var(--orange);
+      outline-offset: 5px;
+    }
+
+    /* Background texture */
+
+    #texture {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    /* Header */
+
+    .header {
+      height: 106px;
+      padding: 0 5%;
+
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 30px;
+    }
+
+    .logo {
+      font-family: "Barlow Condensed", sans-serif;
+      font-size: 38px;
+      font-weight: 900;
+      line-height: 1;
+      letter-spacing: -1.5px;
+    }
+
+    .logo span {
+      color: var(--orange);
+    }
+
+    .navigation {
+      display: flex;
+      gap: clamp(25px, 5vw, 80px);
+      font-size: 14px;
+    }
+
+    .navigation a {
+      padding: 8px 0;
+      transition: color 0.2s;
+    }
+
+    .navigation a:hover {
+      color: var(--orange);
+    }
+
+    /* Main layout */
+
+    .artist-layout {
+      height: calc(100svh - 162px);
+      min-height: 430px;
+      padding: 20px 5% 35px;
+
+      display: grid;
+      grid-template-columns: 48% 52%;
+      align-items: center;
+    }
+
+    /* Scrollable artist list */
+
+    .artist-index {
+      height: 100%;
+      min-height: 0;
+      padding-right: 7%;
+
+      display: flex;
+      flex-direction: column;
+    }
+
+    .index-heading {
+      margin: 0 0 20px 27px;
+      color: #bcbcb7;
+      font-size: 14px;
+      font-weight: 400;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .list-window {
+      flex: 1;
+      min-height: 0;
+      position: relative;
+    }
+
+    .artist-list {
+      height: 100%;
+      overflow-y: auto;
+      overscroll-behavior-y: contain;
+
+      padding: 10px 18px 55px 27px;
+
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 22px;
+
+      scrollbar-width: thin;
+      scrollbar-color: #666 transparent;
+    }
+
+    .artist-list::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .artist-list::-webkit-scrollbar-thumb {
+      background: #666;
+      border-radius: 4px;
+    }
+
+    .artist-button {
+      position: relative;
+      max-width: 100%;
+
+      padding: 2px 0;
+      border: 0;
+      background: none;
+
+      color: var(--muted);
+      text-align: left;
+
+      font-family: "Barlow Condensed", sans-serif;
+      font-size: clamp(30px, 3.8vw, 58px);
+      font-weight: 800;
+      line-height: 1.04;
+      letter-spacing: -0.025em;
+
+      transition: color 0.2s;
+    }
+
+    .artist-button:hover,
+    .artist-button[aria-pressed="true"] {
+      color: var(--text);
+    }
+
+    .artist-button[aria-pressed="true"]::before {
+      content: "";
+
+      position: absolute;
+      top: 0.5em;
+      left: -24px;
+
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--orange);
+    }
+
+    /* Artist portrait */
+
+    .portrait-panel {
+      min-width: 0;
+      padding-left: 2%;
+
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 28px;
+    }
+
+    .portrait-stage {
+      position: relative;
+      isolation: isolate;
+
+      width: min(39vw, 64svh, 600px);
+      aspect-ratio: 1;
+    }
+
+    .portrait {
+      position: relative;
+
+      width: 100%;
+      height: 100%;
+
+      overflow: hidden;
+      border-radius: 50%;
+      background: #151515;
+
+      box-shadow: 0 0 0 1px #ffffff26;
+    }
+
+    .portrait img {
+      position: absolute;
+      inset: 0;
+
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+
+      filter: grayscale(1) contrast(1.1);
+    }
+
+    .ripples {
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    .ripples span {
+      position: absolute;
+      inset: 0;
+
+      border: 1px solid var(--orange);
+      border-radius: 50%;
+    }
+
+    .portrait-meta {
+      min-height: 66px;
+      max-width: 100%;
+      text-align: center;
+    }
+
+    .portrait-meta h2 {
+      margin: 0 0 12px;
+      font-size: 18px;
+      font-weight: 400;
+      line-height: 1.3;
+    }
+
+    .portrait-meta a {
+      display: inline-block;
+      padding: 4px 0;
+
+      border-bottom: 1px solid #777;
+
+      color: #c5c5bf;
+      font-size: 14px;
+    }
+
+    .portrait-meta a:hover {
+      color: var(--orange);
+      border-color: var(--orange);
+    }
+
+    .image-message {
+      position: absolute;
+      inset: 0;
+
+      display: grid;
+      place-items: center;
+      padding: 30px;
+
+      color: #ccc;
+      text-align: center;
+      font-size: 14px;
+    }
+
+    .image-message[hidden] {
+      display: none;
+    }
+
+    /* Footer */
+
+    .footer {
+      height: 56px;
+      padding: 0 5% 20px;
+
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+
+      color: #aaa;
+      font-size: 12px;
+    }
+
+    .replay-button {
+      padding: 5px 0;
+      border: 0;
+      background: none;
+
+      color: #aaa;
+      font-size: 12px;
+    }
+
+    .replay-button:hover {
+      color: var(--text);
+    }
+
+    /* Loading screen */
+
+    .loader {
+      position: fixed;
+      inset: 0;
+      z-index: 30;
+
+      display: grid;
+      place-items: center;
+
+      background: #191919;
+
+      transition:
+        opacity 0.55s,
+        visibility 0.55s;
+    }
+
+    .loader.is-hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .loading-ripples {
+      position: relative;
+      width: 34px;
+      height: 34px;
+    }
+
+    .loading-ripples b,
+    .loading-ripples i {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+    }
+
+    .loading-ripples b {
+      background: var(--orange);
+    }
+
+    .loading-ripples i {
+      border: 1px solid var(--orange);
+      animation: loading-ripple 1.9s ease-out infinite;
+    }
+
+    .loading-ripples i:nth-child(2) {
+      animation-delay: -0.63s;
+    }
+
+    .loading-ripples i:nth-child(3) {
+      animation-delay: -1.26s;
+    }
+
+    @keyframes loading-ripple {
+      from {
+        transform: scale(1);
+        opacity: 0.8;
+      }
+
+      to {
+        transform: scale(8);
+        opacity: 0;
+      }
+    }
+
+    /* Mobile */
+
+    @media (max-width: 700px) {
+      .header {
+        height: 86px;
+        padding: 0 6%;
+        gap: 15px;
+      }
+
+      .logo {
+        font-size: 30px;
+      }
+
+      .navigation {
+        gap: 18px;
+        font-size: 12px;
+      }
+
+      .artist-layout {
+        height: calc(100svh - 140px);
+        min-height: 580px;
+        padding: 5px 6% 15px;
+
+        grid-template-columns: 1fr;
+        grid-template-rows: 55% 45%;
+        gap: 12px;
+      }
+
+      .portrait-panel {
+        grid-row: 1;
+        padding: 0;
+        gap: 17px;
+      }
+
+      .portrait-stage {
+        width: min(60vw, 31svh, 285px);
+      }
+
+      .portrait-meta {
+        min-height: 58px;
+      }
+
+      .portrait-meta h2 {
+        margin-bottom: 6px;
+        font-size: 16px;
+      }
+
+      .portrait-meta a {
+        font-size: 12px;
+      }
+
+      .artist-index {
+        grid-row: 2;
+        width: 100%;
+        padding: 0;
+      }
+
+      .index-heading {
+        margin: 0 0 9px 24px;
+        font-size: 12px;
+      }
+
+      .artist-list {
+        padding: 5px 10px 30px 24px;
+        gap: 16px;
+      }
+
+      .artist-button {
+        font-size: 34px;
+      }
+
+      .artist-button[aria-pressed="true"]::before {
+        left: -22px;
+        width: 7px;
+        height: 7px;
+      }
+
+      .footer {
+        height: 54px;
+        padding: 0 6% 15px;
+        font-size: 11px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        transition: none !important;
+      }
+
+      .loading-ripples i {
+        animation: none;
+        transform: scale(3);
+        opacity: 0.3;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <canvas id="texture" aria-hidden="true"></canvas>
+
+  <div
+    class="loader"
+    id="loader"
+    role="status"
+    aria-label="Loading Impulse"
+  >
+    <div class="loading-ripples" aria-hidden="true">
+      <i></i>
+      <i></i>
+      <i></i>
+      <b></b>
+    </div>
+  </div>
+
+  <header class="header">
+    <a class="logo" href="#" aria-label="Impulse home">
+      impulse<span>!</span>
+    </a>
+
+    <nav class="navigation" aria-label="Main navigation">
+      <a
+        href="https://www.impulserecords.com/our-story/"
+        target="_blank"
+        rel="noopener"
+      >
+        About
+      </a>
+
+      <a
+        href="https://www.impulserecords.com/releases-archive/"
+        target="_blank"
+        rel="noopener"
+      >
+        Music
+      </a>
+
+      <a
+        href="https://store.ververecords.com/"
+        target="_blank"
+        rel="noopener"
+      >
+        Merchandise
+      </a>
+    </nav>
+  </header>
+
+  <main class="artist-layout">
+    <section class="artist-index" aria-label="Artist index">
+      <h1 class="index-heading">Artists</h1>
+
+      <div class="list-window">
+        <div
+          class="artist-list"
+          id="artistList"
+          role="group"
+          aria-label="Choose an Impulse artist"
+        ></div>
+      </div>
+    </section>
+
+    <section class="portrait-panel" aria-label="Selected artist">
+      <div class="portrait-stage">
+        <div
+          class="ripples"
+          id="ripples"
+          aria-hidden="true"
+        ></div>
+
+        <div class="portrait" id="portrait">
+          <div class="image-message" id="imageMessage">
+            Loading portrait…
+          </div>
+        </div>
+      </div>
+
+      <div class="portrait-meta" aria-live="polite">
+        <h2 id="artistName">John Coltrane</h2>
+
+        <a
+          id="artistLink"
+          href="https://www.impulserecords.com/artists/"
+          target="_blank"
+          rel="noopener"
+        >
+          Explore artist
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span>Follow your impulse.</span>
+
+    <button class="replay-button" id="replay" type="button">
+      Replay intro
+    </button>
+  </footer>
+
+  <script>
+    /*
+      Add your photographs inside an "images" folder.
+      Change the image paths below to match your filenames.
+    */
+
+    const artists = [
+      {
+        name: "John Coltrane",
+        image: "images/john-coltrane.jpg",
+        url: "https://www.impulserecords.com/artists/"
+      },
+      {
+        name: "Alice Coltrane",
+        image: "images/alice-coltrane.jpg",
+        url: "https://www.alicecoltrane.com/"
+      },
+      {
+        name: "Shabaka",
+        image: "images/shabaka.jpg",
+        url: "https://www.impulserecords.com/artists/"
+      },
+      {
+        name: "The Messthetics",
+        image: "images/the-messthetics.jpg",
+        url: "https://www.themessthetics.com/"
+      },
+      {
+        name: "David Murray Quartet",
+        image: "images/david-murray.jpg",
+        url: "https://davidmurray.xyz/"
+      },
+      {
+        name: "Brandee Younger",
+        image: "images/brandee-younger.jpg",
+        url: "https://brandeeyounger.com/"
+      },
+      {
+        name: "Blake Mills / Pino Palladino",
+        image: "images/blake-pino.jpg",
+        url: "https://www.blakemillsonline.com/"
+      },
+      {
+        name: "Irreversible Entanglements",
+        image: "images/irreversible-entanglements.jpg",
+        url: "https://www.irreversibleentanglements.com/"
+      },
+      {
+        name: "Sons of Kemet",
+        image: "images/sons-of-kemet.jpg",
+        url: "https://www.shabakahutchings.com/"
+      },
+      {
+        name: "The Comet Is Coming",
+        image: "images/the-comet-is-coming.jpg",
+        url: "https://www.impulserecords.com/artists/"
+      },
+      {
+        name: "Shabaka & The Ancestors",
+        image: "images/shabaka-ancestors.jpg",
+        url: "https://www.shabakahutchings.com/"
+      },
+      {
+        name: "Thelonious Monk",
+        image: "images/thelonious-monk.jpg",
+        url: "https://theloniousmonk.store/"
+      }
+    ];
+
+    const artistList = document.getElementById("artistList");
+    const portrait = document.getElementById("portrait");
+    const ripples = document.getElementById("ripples");
+    const artistName = document.getElementById("artistName");
+    const artistLink = document.getElementById("artistLink");
+    const imageMessage = document.getElementById("imageMessage");
+    const loader = document.getElementById("loader");
+
+    const reducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    );
+
+    const artistButtons = [];
+
+    let currentImage = null;
+    let revealAnimation = null;
+    let selectionSequence = 0;
+    let introTimer = null;
+
+    /* Artist ripple animation */
+
+    function createRipples() {
+      ripples.replaceChildren();
+
+      if (reducedMotion.matches) {
+        return;
+      }
+
+      for (let index = 0; index < 3; index++) {
+        const ring = document.createElement("span");
+
+        ripples.appendChild(ring);
+
+        const animation = ring.animate(
+          [
+            {
+              transform: "scale(0.96)",
+              opacity: 0.7
+            },
+            {
+              transform: "scale(1.48)",
+              opacity: 0
+            }
+          ],
+          {
+            duration: 1100,
+            delay: index * 130,
+            easing: "cubic-bezier(0.16, 0.5, 0.3, 1)",
+            fill: "both"
+          }
+        );
+
+        animation.finished
+          .then(() => ring.remove())
+          .catch(() => ring.remove());
+      }
+    }
+
+    /* Change the selected artist */
+
+    async function selectArtist(artist, button, animate = true) {
+      const sequence = ++selectionSequence;
+
+      artistButtons.forEach((artistButton) => {
+        artistButton.setAttribute(
+          "aria-pressed",
+          String(artistButton === button)
+        );
+      });
+
+      portrait.setAttribute("aria-busy", "true");
+
+      const image = new Image();
+
+      image.alt = artist.name;
+      image.src = artist.image;
+
+      try {
+        await image.decode();
+      } catch {
+        if (sequence !== selectionSequence) {
+          return;
+        }
+
+        if (revealAnimation) {
+          revealAnimation.cancel();
+        }
+
+        portrait.querySelectorAll("img").forEach((item) => {
+          item.remove();
+        });
+
+        currentImage = null;
+
+        artistName.textContent = artist.name;
+        artistLink.href = artist.url;
+
+        imageMessage.textContent =
+          "Add this artist’s photograph to your images folder.";
+
+        imageMessage.hidden = false;
+
+        portrait.removeAttribute("aria-busy");
+
+        return;
+      }
+
+      if (sequence !== selectionSequence) {
+        return;
+      }
+
+      if (revealAnimation) {
+        revealAnimation.cancel();
+      }
+
+      if (currentImage) {
+        currentImage.style.clipPath = "none";
+      }
+
+      portrait.querySelectorAll("img").forEach((item) => {
+        if (item !== currentImage) {
+          item.remove();
+        }
+      });
+
+      const previousImage = currentImage;
+
+      portrait.appendChild(image);
+
+      currentImage = image;
+
+      imageMessage.hidden = true;
+
+      artistName.textContent = artist.name;
+      artistLink.href = artist.url;
+
+      portrait.removeAttribute("aria-busy");
+
+      if (!animate || reducedMotion.matches) {
+        if (previousImage) {
+          previousImage.remove();
+        }
+
+        return;
+      }
+
+      createRipples();
+
+      revealAnimation = image.animate(
+        [
+          {
+            clipPath: "circle(0% at 50% 50%)"
+          },
+          {
+            clipPath: "circle(72% at 50% 50%)"
+          }
+        ],
+        {
+          duration: 720,
+          easing: "cubic-bezier(0.2, 0.65, 0.3, 1)",
+          fill: "both"
+        }
+      );
+
+      revealAnimation.finished
+        .then(() => {
+          if (previousImage) {
+            previousImage.remove();
+          }
+
+          image.style.clipPath = "none";
+        })
+        .catch(() => {});
+    }
+
+    /* Build the artist list */
+
+    artists.forEach((artist, index) => {
+      const button = document.createElement("button");
+
+      button.className = "artist-button";
+      button.type = "button";
+      button.textContent = artist.name;
+
+      button.setAttribute(
+        "aria-pressed",
+        String(index === 0)
+      );
+
+      button.addEventListener("click", () => {
+        selectArtist(artist, button);
+      });
+
+      button.addEventListener("keydown", (event) => {
+        const directions = {
+          ArrowDown: 1,
+          ArrowUp: -1
+        };
+
+        const direction = directions[event.key];
+
+        if (!direction) {
+          return;
+        }
+
+        event.preventDefault();
+
+        const nextIndex =
+          (index + direction + artistButtons.length) %
+          artistButtons.length;
+
+        const nextButton = artistButtons[nextIndex];
+
+        nextButton.focus();
+
+        nextButton.scrollIntoView({
+          block: "nearest"
+        });
+      });
+
+      artistButtons.push(button);
+      artistList.appendChild(button);
+    });
+
+    selectArtist(artists[0], artistButtons[0], false);
+
+    /* Loading screen */
+
+    function finishIntro() {
+      loader.classList.add("is-hidden");
+      loader.setAttribute("aria-hidden", "true");
+    }
+
+    function playIntro() {
+      clearTimeout(introTimer);
+
+      loader.classList.remove("is-hidden");
+      loader.removeAttribute("aria-hidden");
+
+      introTimer = setTimeout(
+        finishIntro,
+        reducedMotion.matches ? 100 : 1900
+      );
+    }
+
+    document.getElementById("replay").addEventListener(
+      "click",
+      playIntro
+    );
+
+    /* Black and gray background texture */
+
+    const textureCanvas = document.getElementById("texture");
+    const textureContext = textureCanvas.getContext("2d");
+
+    function drawTexture() {
+      textureCanvas.width = Math.ceil(window.innerWidth / 2);
+      textureCanvas.height = Math.ceil(window.innerHeight / 2);
+
+      const textureImage = textureContext.createImageData(
+        textureCanvas.width,
+        textureCanvas.height
+      );
+
+      for (
+        let index = 0;
+        index < textureImage.data.length;
+        index += 4
+      ) {
+        const tone = 22 + Math.random() * 27;
+
+        textureImage.data[index] = tone;
+        textureImage.data[index + 1] = tone;
+        textureImage.data[index + 2] = tone;
+        textureImage.data[index + 3] = 255;
+      }
+
+      textureContext.putImageData(textureImage, 0, 0);
+
+      textureContext.lineWidth = 0.35;
+
+      for (let index = 0; index < 55; index++) {
+        const x = Math.random() * textureCanvas.width;
+        const y = Math.random() * textureCanvas.height;
+        const opacity = Math.random() * 0.065;
+
+        textureContext.strokeStyle =
+          `rgba(210, 210, 205, ${opacity})`;
+
+        textureContext.beginPath();
+        textureContext.moveTo(x, y);
+
+        textureContext.quadraticCurveTo(
+          x + 25,
+          y - 8,
+          x + 10 + Math.random() * 110,
+          y - 10 - Math.random() * 50
+        );
+
+        textureContext.stroke();
+      }
+    }
+
+    drawTexture();
+
+    window.addEventListener("resize", drawTexture);
+
+    playIntro();
+  </script>
+</body>
+</html>
